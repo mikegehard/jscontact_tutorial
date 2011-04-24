@@ -1,0 +1,74 @@
+Back to our helper!
+
+h4. Reworking the Helper Tests
+
+Looking at the existing tests, we need to be less specific about the expected output.  My first test is checking that it outputs UL tags with LIs containing each number.  But now I want to allow the LIs to contain more than just the number.  Let me generalize the example using regular expressions:
+
+<pre class="brush:ruby">
+  it "should output an unordered list with the numbers and edit links" do
+    output = print_numbers(@phone_numbers)
+    output.should match(/<ul>.*<\/ul>/)
+    @phone_numbers.each do |phone_number|
+      output.should match(/<li>#{phone_number.number}.*<\/li>/)
+    end      
+  end
+</pre>
+
+That confirms that the output contains UL wrapper tags and has LI elements for each phone number with some optional content between the phone number and the close LI.
+
+With that generalized form, the test about one phone number feels unnecessary so I'm going to strip it out.
+
+h4. Looking for Links
+
+We want to check that the output has links, but in order to create a link Rails is going to need an ID for the @PhoneNumber@.  Getting our objects to have IDs means they need to be stored into the database, and that means they need to be valid.  Refactoring time.
+
+I'll start by reworking my @before(:each)@ into a @before(:all)@.  It'll be run just once before any of the examples have run.  That way the expensive step of storing data to the DB happens the minimum number of times, once.  In that before block I'll need to create a valid person that the phone numbers can be attached to.  Here's what I ended up with:
+
+<pre class="brush:ruby">
+  before(:all) do
+    person = Person.create(:first_name => "John", :last_name => "Doe")
+    number_a = person.phone_numbers.create(:number => "1234567")
+    number_b = person.phone_numbers.create(:number => "7654321")
+    @phone_numbers = [number_a, number_b]
+  end
+</pre>
+
+Let's then write a new example that looks for edit links...
+
+<pre class="brush:ruby">
+  it "should have edit links for each phone number" do
+    output = print_numbers(@phone_numbers)
+    @phone_numbers.each do |phone_number|
+      output.should match(/href='#{edit_phone_number_path(phone_number)}'/)
+    end
+  end
+</pre>
+
+Now the example is failing for the right reason and it's time to modify the helper.  Open the @print_numbers@ helper and add an edit link to each element.  Run you tests and ensure they pass.
+
+
+================
+
+Those phone number lists are rendered from our @print_numbers@ helper in @app/helpers/phone_numbers_helper@, so let's look at that file.  Right now the @collect@ is just pulling out the @number@ attribute.  We want to generate a link to the edit page.
+
+<pre class="brush:ruby">
+  def print_numbers(phone_numbers)
+    text_numbers = phone_numbers.collect{|pn| link_to pn.number, edit_phone_number_path(pn)}
+    text_numbers.join(", ")
+  end
+</pre>
+
+Refresh the any page that displays phone numbers and...what is this mess?
+
+In Rails 2 the default was to "trust" strings for printing.  If you didn't trust a string, you'd output it with the @h@ method to escape any HTML.
+
+In Rails 3 this has changed -- now the default is to *not* trust strings.  Our @edit_phone_number_icon@ method is returning an HTML link, the renderer isn't trusting it, so we see escaped HTML appear on the page.
+
+To make our HTML render properly we need to make a small tweak to the @print_numbers@ helper marking the result as a trusted string:
+
+<pre class="brush:ruby">
+  def print_numbers(phone_numbers)
+    text_numbers = phone_numbers.collect{|pn| link_to pn.number, edit_phone_number_path(pn)}
+    text_numbers.join(", ").html_safe
+  end
+</pre>

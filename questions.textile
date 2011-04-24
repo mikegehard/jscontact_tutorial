@@ -1,0 +1,4 @@
+1) 1.9.2 + RailsInstaller on Windows???
+2) SSH Keys on Windows?
+3) Unicorn on Windows?
+4) Check that HTML displays properly when writing "<ul><li>thenumber</li><li>secondnumber</li></ul>"
