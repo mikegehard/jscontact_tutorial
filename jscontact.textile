@@ -1,21 +1,21 @@
-In this advanced Rails project you'll create a contact manager while practicing techniques including:
+In this advanced Rails project, you'll create a contact manager. The tools that you will use include the following:
 
-* Using "RSpec":http://rspec.info/ and tests to drive your development
+* Testing with "RSpec":http://relishapp.com/rspec/ to drive your development
 * Creating view templates with "HAML":http://haml-lang.com/ and "SASS":http://sass-lang.com/
 * Generating code with "Nifty Generators":http://github.com/ryanb/nifty-generators
-* Building complex forms with "Formtastic":http://github.com/justinfrench/formtastic
+* Building complex forms with "Simple Form":http://github.com/plataformatec/simple_form
 * Building Rails3/AREL queries and scopes
-* Handling file attachments
+* Handling file attachments with "Carrierwave":http://github.com/jnicklas/carrierwave
 * Building reusable view code with helpers and partials
 * Refactoring
 * Managing authentication and authorization
 * Server and client-side validations
 * Deployment and monitoring
 
-This project assumes you have already completed the "general Ruby setup":http://jumpstartlab.com/resources/general/environment/ and "general Rails setup":http://jumpstartlab.com/resources/rails-jumpstart/preparation/ procedures.  In addition, we'll use several gems specific to this tutorial.  While the Bundler system can download them for you on the fly, pre-installing them will save some time.  On Linux or MacOS, use the command below.  On Windows, use the same command but omit the "sudo" at the beginning:
+This project assumes you have already completed the "general Ruby setup":http://jumpstartlab.com/resources/general/environment/ and "general Rails setup":http://jumpstartlab.com/resources/rails-jumpstart/preparation/ procedures.  In addition, we'll use several gems specific to this tutorial.  While the "Bundler";http://gembundler.com/ system can download them for you on the fly, pre-installing them will save some time.  On Linux or MacOS, use the command below.  On Windows, use the same command but omit the "sudo" at the beginning:
 
 <pre class='brush:plain'>
-sudo gem install haml nifty_generators rspec-rails cucumber webrat mocha carrierwave simpleform heroku
+sudo gem install haml nifty_generators rspec-rails cucumber capybara mocha carrierwave simpleform heroku
 </pre>
 
 At the time of this writing I am using *Ruby 1.9.2* with the following relevant gem versions:
@@ -32,7 +32,7 @@ h2. I0: Up and Running
 
 Let's lay the groundwork for our project.  In your terminal, switch to the directory where you'd like your project to be stored.  I'll use @~/Projects@.
 
-Run the @rails -v@ command and you should see your current Rails version, mine is *3.0.6*.  Let's create a new Rails project:
+Run the @rails -v@ command and you should see your current Rails version, mine is *3.0.6* but yours might say *3.0.7* which is fine.  Let's create a new Rails project:
 
 <pre class='brush:plain'>
   rails new JSContact
@@ -42,7 +42,7 @@ Then @cd@ into your project directory and open the project in your editor of cho
 
 h3. Veering Off the "Golden Path" with RSpec
 
-With our project created, I'd like to veer off the Rails defaults for both the testing and JavaScript libraries.  First, let's setup RSpec.  Open your project's @Gemfile@ and add this dependency:
+With our project created, we will veer off the Rails defaults for both the testing and JavaScript libraries.  First, let's setup RSpec as our testing framework.  Open your project's @Gemfile@ and add this dependency:
 
 <pre class='brush:ruby'>
   gem 'rspec-rails'
@@ -54,7 +54,7 @@ Then, in your terminal window that's in the project directory, run bundler:
   bundle
 </pre>
 
-Now rspec-rails is available, but your project isn't set to use it by default.  Accomplish that change by running this generator:
+Now rspec-rails is available, but we still need to do some setup to make it all work.  Running this generator will perform the setup for you:
 
 <pre class='brush:plain'>
   rails generate rspec:install
@@ -68,7 +68,7 @@ You should see output like this:
   create  spec/spec_helper.rb
 </pre>
 
-Now your project generators will use RSpec by default.  You still have Rails' default @test@ folder hanging around -- let's delete that with:
+Now your project is set to use RSpec and the generators will use RSpec by default.  You still have Rails' default @test@ folder hanging around -- let's delete that with:
 
 <pre class='brush:plain'>
   rm -rf test
@@ -82,7 +82,7 @@ Or on Windows try:
 
 Now you're free of @Test::Unit@ and ready to rock with RSpec.
 
-h3. Then Replacing Prototype with jQuery
+h3. Replacing Prototype with jQuery
 
 Go back to your @Gemfile@ and add this dependency:
 
@@ -90,10 +90,10 @@ Go back to your @Gemfile@ and add this dependency:
   gem 'jquery-rails'
 </pre>
 
-Run @bundle@ again, then run this generator from your project directory:
+Run @bundle@ again and then run this generator from your project directory:
 
 <pre class='brush:plain'>
-  rails generate rspec:install
+  rails generate jquery:install
 </pre>
 
 As it installs the files you'll get a question about the conflicting @rails.js@ file -- enter @y@ to overwrite it:
@@ -108,7 +108,7 @@ As it installs the files you'll get a question about the conflicting @rails.js@ 
       create  public/javascripts/jquery.min.js
     fetching  jQuery UJS adapter (github HEAD)
     conflict  public/javascripts/rails.js
-Overwrite /Users/jcasimir/Dropbox/Projects/JSContact/public/javascripts/rails.js? (enter "h" for help) [Ynaqdh] y
+Overwrite /Users/jcasimir/Projects/JSContact/public/javascripts/rails.js? (enter "h" for help) [Ynaqdh] y
        force  public/javascripts/rails.js
 </pre>
 
@@ -128,13 +128,13 @@ Add this the dependency to your @Gemfile@:
   gem 'unicorn'
 </pre>
 
-Run @bundle@ from your project directory, wait for the installation.  Then to start the server:
+Run @bundle@ from your project directory and wait for the installation to complete.  Start the server like this:
 
 <pre class="brush:plain">
   unicorn
 </pre>
 
-And you're running!  Load "http://0.0.0.0:8080":http://0.0.0.0:8080 in your browser and you should see the Rails splash screen.  Click the "About Your Application" link and you should see all your library versions.  If your database were not installed properly or inaccessible, you'd see an error here.
+Load "http://0.0.0.0:8080":http://0.0.0.0:8080 in your browser and you should see the Rails splash screen.  Click the "About Your Application" link and you should see all your library versions.  If your database were not installed properly or inaccessible, you'd see an error here.
 
 h2. Setup Git Repository
 
@@ -144,7 +144,7 @@ I'll assume that you've already setup Git on your system.  From within your proj
   git init .
 </pre>
 
-Then add your current working directory to the repository and commit it:
+Then add all of the files in your current working directory to the repository and commit it:
 
 <pre class="brush:plain">
   git add .
@@ -167,7 +167,7 @@ Run the @bundle@ command again and now you'll have command-line access to Heroku
   heroku create
 </pre>
 
-Then you'll get back the URL where the app is accessible.  Try loading it in your browser and you'll see the generic Heroku splash screen.  It's not yet running your code!  Push your project up like this:
+After running that command, you'll get back the URL where the app is accessible.  Try loading the URL in your browser and you'll see the generic Heroku splash screen.  It's not running your code yet so push your project up like this:
 
 <pre class="brush:plain">
   git push heroku master
@@ -189,7 +189,7 @@ We've added several gems to our @Gemfile@, but several of them are only useful f
 <pre class='brush:ruby'>
   source 'http://rubygems.org'
 
-  gem 'rails', '3.0.6'
+  gem 'rails', '3.0.7'
   gem 'sqlite3'
 
   group :development, :test do
@@ -219,7 +219,7 @@ h3. A Feature Branch
 But first, let's make a feature branch in git:
 
 <pre class="console">
-  git branch build_phone_numbers
+  git branch build_people
   git checkout build_people
 </pre>
 
@@ -227,7 +227,7 @@ Now all our changes will be made on the @build_people@ branch.  As we finish the
 
 h3. Nifty Scaffold
 
-I want to use the scaffold generator to create a model named @Person@, but I don't care for some of the conventions used in the default scaffold generator.  Instead, I prefer the @nifty-generators@ created by "RailsCasts author Ryan Bates":http://railscasts.com.
+I want to use the scaffold generator to create a model named @Person@, but I don't care for some of the conventions used in the default Rails scaffold generator.  Instead, I prefer the @nifty-generators@ created by "RailsCasts author Ryan Bates":http://railscasts.com.
 
 In your @Gemfile@'s development section, add a dependency for @"nifty-generators"@, run @bundle@ from the command prompt, then run this generator, answering @yes@ to the conflict:
 
@@ -241,9 +241,9 @@ That sets us up to use his "nifty" scaffolding.  Let's then generate a scaffolde
   rails generate nifty:scaffold Person first_name:string last_name:string
 </pre>
 
-The first line of the output shows Ryan sneaking the @"mocha"@ gem into our Gemfile.  Move the gem dependency into the development/test block we already have and run @bundle@.  Then run the migration with @rake db:migrate@.
+The first line of the output shows Ryan sneaking the @"mocha"@ gem into our Gemfile.  Let's move the gem dependency into the development/test block we already have and run @bundle@ and then run the migration with @rake db:migrate@.
 
-Both of the generators created test-related files for us.  They saw that we're using RSpec and created corresponding controller and model test files.  Let's run those tests now:
+The generators created test-related files for us.  They saw that we're using RSpec and created corresponding controller and model test files.  Let's run those tests now:
 
 <pre class="brush:plain">
   rake
@@ -251,7 +251,7 @@ Both of the generators created test-related files for us.  They saw that we're u
 
 Assuming those test's pass use @git add .@ to add all current changes to your repository and commit them with a short message like @git commit -m "Setup nifty_scaffold and used it to generate Person model"@
 
-Try creating a few sample people on @localhost@ through your browser.
+Try creating a few sample people at @http://localhost:8080/people@ through your browser.
 
 h3. Starting with Testing
 
@@ -336,7 +336,7 @@ The test failed because it expected a person with no first name to be invalid, b
   end  
 </pre>
 
-If you run @rake@ here you'll see that the test is _still_ failing.  Huh?  Try running it like this:
+If you run @rake@ here you'll see that the tests are _still_ failing.  Huh?  Try running it like this:
 
 <pre class="console">
   rspec spec/models/person_spec.rb
@@ -365,7 +365,7 @@ When we run the model test directly, everything works.  When we run just @rake@,
 
 Then run @rake@ and your tests should pass.  
 
-Following that concept, let's add a validation for @:last_name@ to the model then write a test checking that a person is not valid without a last name.
+Following that example for @:first_name@, let's add a validation for @:last_name@ to the model then write a test checking that a person is not valid without a last name.
 
 Run @rake@ and make sure you get @0 failures@.
 
@@ -476,9 +476,9 @@ Run @rake db:migrate@ to execute the generated migration.  Run @rake@ again and 
 
 h4. Setting Relationships
 
-Next open the @person.rb@ model and add the association @has_many :phone_numbers@.  Go into the @phone_number.rb@ model and add the relationship @belongs_to :person@.  Run @rake@ and your tests should all pass.
+Next open the @person.rb@ model and add the association @has_many :phone_numbers@.  Go into the @phone_number.rb@ model and add the relationship @belongs_to :person@. [Question for Jeff: you are doing TDD and don't have a test for the belongs_to in PhoneNumber spec so why add it to the model?]  Run @rake@ and your tests should all pass.
 
-Try it out yourself by going into the console and adding a phone number manually:
+Try it out yourself by going into the console via @rails console@ and adding a phone number manually:
 
 <pre class="console">
 p = Person.first
@@ -518,6 +518,8 @@ Run your tests with @rake@ and they should still be passing.  We want to start w
 Run @rake@ and you should have one failing test.  Once you see red, go into the @phone_number.rb@ model and add a validation checking the existence of the @number@, run your tests again, and make sure they're green.
 
 A @PhoneNumber@ shouldn't be allowed to float out in space, so let's require that it be attached to a @Person@:
+
+[Question for Jeff: Would this be a good place to put in a test for the belongs_to association and have the students add the association here?]
 
 <pre class="brush:ruby">
   it "should not be valid without a person" do
@@ -568,7 +570,7 @@ We want to output a comma-separated list of the person's phone numbers.  It's a 
 
 h4. Testing Helpers
 
-Many developers don't test helpers, but I find they're one of the most common failure points in production applications.  Devs don't write tests for them because they're "just little presentation methods," then you see weird presentation artifacts in the application as the helpers go wrong.
+Many developers don't test helpers, but I find they're one of the most common failure points in production applications.  Devs don'think they need to write tests for them because they're "just little presentation methods" but then you see weird presentation artifacts in the application as the helpers get changed.
 
 Writing tests for helpers is super easy, here's how we can do it.
 
@@ -923,7 +925,7 @@ h3. Setting Relationships
 
 Open the @Person@ model and declare a @has_many@ relationship for @email_addresses@.  Open the @EmailAddress@ model and declare a @belongs_to@ relationship with @Person@.  
 
-Now @rake@ your tests and they should all pass.  Since you're green it be a good time to *commit your changes*.
+Now run your tests with @rake@ and they should all pass.  Since you're green it be a good time to *commit your changes*.
 
 h3. Adding Model Tests and Validations for Email Addresses
 
@@ -1113,12 +1115,13 @@ Our tests are still red so we're allowed to write code.  To implement a polymorp
 We need a migration.  Use @rails generate migration@ to create a migration that does the following to the @phone_numbers@ table:
 
 * destroy all the existing @PhoneNumbers@ with @PhoneNumber.destroy_all@
-* remove the column @person_id@
+ * remove the column @person_id@
 * add a column named @contact_id@ that is an @:integer@
 * add a column named @contact_type@ that is a @:string@
 * in the @down@ method, @raise ActiveRecord::IrreversibleMigration@
 
 Then run the migration.  Bye-bye, sample phone number data!
+[Note to Jeff: Why not just keep the data and populate the type column with "Person"?]
 
 h4. Build the Polymorphic Relationship
 
@@ -1357,7 +1360,7 @@ Then go down to the bottom of the controller file.  We want to add a @private@ m
     end
 </pre>
 
-Note that @private@ doesn't have an @end@ line.  Any method defined before the @private@ keyword in a Ruby class will be private to instances of that object.  Then within the @lookup_phone_number@ method we just have the same line that was common to the three actions.  *Delete* the line from the three actions and run your tests.
+Note that @private@ doesn't have an @end@ line.  Any method defined after the @private@ keyword in a Ruby class will be private to instances of that object.  Then within the @lookup_phone_number@ method we just have the same line that was common to the three actions.  *Delete* the line from the three actions and run your tests.
 
 Some of them should *fail*.  Look at the error messages and backtrace to see the issue.
 
@@ -1884,6 +1887,8 @@ That's exciting, but now we need links for login/logout that don't require manua
 
 Open @/app/views/layouts/application.html.erb@ and you'll see the framing for all our view templates.  Let's add in the following *just below the flash messages*:
 
+[Question for Jeff: Strange that you converted to HAML above but are stil using ERB here]
+
 <pre class="brush:ruby">
   <div id="account">
     <% if current_user %>
@@ -1952,6 +1957,8 @@ We haven't written tests for login/logout.  Here are some excuses:
 * OmniAuth is tested already, so we don't need to test it's functionality
 * The code added to our app is relatively simple
 * Handling the external service integration in our test suite is challenging
+
+[Note to Jeff: You could do some integration testing of OmniAuth using the info from this blog posting http://pivotallabs.com/users/mgehard/blog/articles/category/732-omniauth]
 
 Let's make a mental note that we want to try writing tests for the authentication parts of our app later and move on.  We'll get some pieces of it going in the next iteration.
 
